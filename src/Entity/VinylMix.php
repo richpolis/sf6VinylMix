@@ -5,13 +5,17 @@ namespace App\Entity;
 use App\Repository\VinylMixRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation\Slug;
+use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 #[ORM\Entity(repositoryClass: VinylMixRepository::class)]
 class VinylMix
 {
+    use TimestampableEntity;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column()]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -21,23 +25,18 @@ class VinylMix
     private ?string $description = null;
 
     #[ORM\Column]
-    private ?int $trackCount = 0;
+    private ?int $trackCount = null;
 
     #[ORM\Column(length: 255)]
     private ?string $genre = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private int $votes = 0;
 
-    #[ORM\Column]
-    private ?int $votes = 0;
+    #[ORM\Column(length: 100, unique: true)]
+    #[Slug(fields: ['title'])]
+    private ?string $slug = null;
 
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
-    }
-
-    // getters and setters
     public function getId(): ?int
     {
         return $this->id;
@@ -91,18 +90,6 @@ class VinylMix
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
     public function getVotes(): ?int
     {
         return $this->votes;
@@ -115,10 +102,20 @@ class VinylMix
         return $this;
     }
 
-    // Methodos 
-    public function getVotesString(): string 
+    public function upVote(): void
+    {
+        $this->votes++;
+    }
+
+    public function downVote(): void
+    {
+        $this->votes--;
+    }
+
+    public function getVotesString(): string
     {
         $prefix = ($this->votes === 0) ? '' : (($this->votes >= 0) ? '+' : '-');
+
         return sprintf('%s %d', $prefix, abs($this->votes));
     }
 
@@ -130,5 +127,16 @@ class VinylMix
             $width
         );
     }
-    
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
 }
